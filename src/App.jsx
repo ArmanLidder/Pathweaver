@@ -38,6 +38,7 @@ export default function App() {
   const [isMouseDown, setIsMouseDown] = useState(false);
   const [isDraggingStart, setIsDraggingStart] = useState(false);
   const [isDraggingTarget, setIsDraggingTarget] = useState(false);
+  const [drawMode, setDrawMode] = useState(null); // 'draw', 'erase', or null
 
   // Timeouts reference to clear on reset
   const [animTimeouts, setAnimTimeouts] = useState([]);
@@ -487,7 +488,9 @@ export default function App() {
       setIsDraggingTarget(true);
     } else {
       setIsMouseDown(true);
-      toggleWall(row, col);
+      const newMode = node.isWall ? "erase" : "draw";
+      setDrawMode(newMode);
+      setWallState(row, col, newMode === "draw");
     }
   };
 
@@ -530,10 +533,10 @@ export default function App() {
           )
         );
       }
-    } else if (isMouseDown) {
+    } else if (isMouseDown && drawMode) {
       const node = grid[row][col];
       if (node.isStart || node.isTarget) return;
-      toggleWall(row, col);
+      setWallState(row, col, drawMode === "draw");
     }
   };
 
@@ -541,13 +544,19 @@ export default function App() {
     setIsMouseDown(false);
     setIsDraggingStart(false);
     setIsDraggingTarget(false);
+    setDrawMode(null);
   };
 
-  const toggleWall = (row, col) => {
+  const setWallState = (row, col, shouldBeWall) => {
+    // Avoid redundant state updates and recalculations
+    const node = grid[row][col];
+    if (node.isWall === shouldBeWall) return;
+
     const updatedGrid = grid.map((r) =>
       r.map((n) => {
         if (n.row === row && n.col === col) {
-          return { ...n, isWall: !n.isWall };
+          if (shouldBeWall && (n.isStart || n.isTarget)) return n;
+          return { ...n, isWall: shouldBeWall };
         }
         return n;
       })
