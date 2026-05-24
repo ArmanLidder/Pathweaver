@@ -17,10 +17,20 @@ const TARGET_NODE_COL = 38;
 const NUM_ROWS = 21;
 const NUM_COLS = 47;
 
+const getDelayFromSpeed = (speedValue) => {
+  if (speedValue === 100) return 0; // instant
+  if (speedValue >= 90) return 2;   // very fast
+  if (speedValue >= 75) return 5;   // fast
+  if (speedValue >= 50) return 15;  // medium-fast
+  if (speedValue >= 30) return 30;  // medium
+  if (speedValue >= 15) return 60;  // slow
+  return 120;                       // very slow
+};
+
 export default function App() {
   const [grid, setGrid] = useState([]);
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("dijkstra");
-  const [speed, setSpeed] = useState(10); // delay in ms, 1 = instant
+  const [speed, setSpeed] = useState(80); // Speed level 1-100 (default 80 = Fast)
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [visualizingPhase, setVisualizingPhase] = useState("idle"); // 'idle', 'searching', 'pathfinding', 'completed', 'no-path'
   const [hasPath, setHasPath] = useState(false);
@@ -143,13 +153,15 @@ export default function App() {
     if (isVisualizing) return;
 
     clearAllTimeouts();
-    const resetGrid = clearPathOnly(grid);
-    setGrid(resetGrid);
+    const clearedGrid = clearPathOnly(grid);
+    
+    // Create a deep copy of the grid for the pathfinder to mutate
+    const gridClone = clearedGrid.map((row) => row.map((node) => ({ ...node })));
 
     // Sync baseline classnames in DOM (removes old path before starting animation)
     for (let r = 0; r < NUM_ROWS; r++) {
       for (let c = 0; c < NUM_COLS; c++) {
-        const node = resetGrid[r][c];
+        const node = clearedGrid[r][c];
         if (!node.isStart && !node.isTarget && !node.isWall) {
           const el = document.getElementById(`node-${r}-${c}`);
           if (el) el.className = "node node-hoverable";
@@ -157,27 +169,29 @@ export default function App() {
       }
     }
 
-    const startNode = resetGrid[startNodePos.row][startNodePos.col];
-    const targetNode = resetGrid[targetNodePos.row][targetNodePos.col];
+    setGrid(clearedGrid);
+
+    const startNode = gridClone[startNodePos.row][startNodePos.col];
+    const targetNode = gridClone[targetNodePos.row][targetNodePos.col];
 
     let visitedNodesInOrder = [];
     const t0 = performance.now();
 
     switch (selectedAlgorithm) {
       case "dijkstra":
-        visitedNodesInOrder = dijkstra(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = dijkstra(gridClone, startNode, targetNode);
         break;
       case "astar":
-        visitedNodesInOrder = astar(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = astar(gridClone, startNode, targetNode);
         break;
       case "greedy":
-        visitedNodesInOrder = greedy(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = greedy(gridClone, startNode, targetNode);
         break;
       case "bfs":
-        visitedNodesInOrder = bfs(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = bfs(gridClone, startNode, targetNode);
         break;
       case "dfs":
-        visitedNodesInOrder = dfs(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = dfs(gridClone, startNode, targetNode);
         break;
       default:
         break;
@@ -187,14 +201,16 @@ export default function App() {
     const execTime = t1 - t0;
 
     const shortestPath = getNodesInShortestPathOrder(targetNode);
+    const delay = getDelayFromSpeed(speed);
 
     // Instant Visualization (No animation timeouts)
-    if (speed === 1) {
+    if (delay === 0) {
       const pathFound = shortestPath.length > 1 && shortestPath[0] === startNode;
-      const finalGrid = resetGrid.map((row) =>
-        row.map((node) => {
-          const isVisitedNode = visitedNodesInOrder.includes(node);
-          const isPathNode = pathFound && shortestPath.includes(node) && !node.isStart && !node.isTarget;
+      const finalGrid = clearedGrid.map((row, r) =>
+        row.map((node, c) => {
+          const cloneNode = gridClone[r][c];
+          const isVisitedNode = cloneNode.isVisited;
+          const isPathNode = pathFound && shortestPath.includes(cloneNode) && !cloneNode.isStart && !cloneNode.isTarget;
           return {
             ...node,
             isVisited: isVisitedNode,
@@ -223,33 +239,33 @@ export default function App() {
     for (let i = 0; i <= visitedNodesInOrder.length; i++) {
       if (i === visitedNodesInOrder.length) {
         const timeout = setTimeout(() => {
-          animateShortestPath(shortestPath, resetGrid, visitedNodesInOrder, timeouts);
-        }, i * speed);
+          animateShortestPath(shortestPath, clearedGrid, gridClone, visitedNodesInOrder, timeouts);
+        }, i * delay);
         timeouts.push(timeout);
         break;
       }
 
       const timeout = setTimeout(() => {
-        const node = visitedNodesInOrder[i];
-        if (!node.isStart && !node.isTarget) {
-          const el = document.getElementById(`node-${node.row}-${node.col}`);
+        const cloneNode = visitedNodesInOrder[i];
+        if (!cloneNode.isStart && !cloneNode.isTarget) {
+          const el = document.getElementById(`node-${cloneNode.row}-${cloneNode.col}`);
           if (el) {
             el.className = `node node-visited node-visited-${selectedAlgorithm}`;
           }
         }
         const counterEl = document.getElementById("visited-counter");
         if (counterEl) counterEl.innerText = i + 1;
-      }, i * speed);
+      }, i * delay);
       timeouts.push(timeout);
     }
 
     setAnimTimeouts(timeouts);
   };
 
-  const animateShortestPath = (shortestPath, baseGrid, visitedNodesInOrder, timeouts) => {
+  const animateShortestPath = (shortestPath, baseGrid, gridClone, visitedNodesInOrder, timeouts) => {
     setVisualizingPhase("pathfinding");
 
-    const startNode = baseGrid[startNodePos.row][startNodePos.col];
+    const startNode = gridClone[startNodePos.row][startNodePos.col];
     const pathFound = shortestPath.length > 1 && shortestPath[0] === startNode;
 
     if (!pathFound) {
@@ -258,10 +274,10 @@ export default function App() {
       setVisitedCount(visitedNodesInOrder.length);
       setPathLength(0);
 
-      const finalGrid = baseGrid.map((row) =>
-        row.map((node) => ({
+      const finalGrid = baseGrid.map((row, r) =>
+        row.map((node, c) => ({
           ...node,
-          isVisited: visitedNodesInOrder.includes(node),
+          isVisited: gridClone[r][c].isVisited,
         }))
       );
       setGrid(finalGrid);
@@ -269,13 +285,14 @@ export default function App() {
       return;
     }
 
-    const pathSpeed = speed * 1.5 < 15 ? 15 : speed * 1.5;
+    const delay = getDelayFromSpeed(speed);
+    const pathSpeed = delay * 1.5 < 15 ? 15 : delay * 1.5;
 
     for (let i = 0; i < shortestPath.length; i++) {
       const timeout = setTimeout(() => {
-        const node = shortestPath[i];
-        if (!node.isStart && !node.isTarget) {
-          const el = document.getElementById(`node-${node.row}-${node.col}`);
+        const cloneNode = shortestPath[i];
+        if (!cloneNode.isStart && !cloneNode.isTarget) {
+          const el = document.getElementById(`node-${cloneNode.row}-${cloneNode.col}`);
           if (el) {
             el.className = "node node-shortest-path";
           }
@@ -290,10 +307,11 @@ export default function App() {
           setVisitedCount(visitedNodesInOrder.length);
           setPathLength(shortestPath.length);
 
-          const finalGrid = baseGrid.map((row) =>
-            row.map((node) => {
-              const isVisitedNode = visitedNodesInOrder.includes(node);
-              const isPathNode = shortestPath.includes(node) && !node.isStart && !node.isTarget;
+          const finalGrid = baseGrid.map((row, r) =>
+            row.map((node, c) => {
+              const cloneNode = gridClone[r][c];
+              const isVisitedNode = cloneNode.isVisited;
+              const isPathNode = shortestPath.includes(cloneNode) && !cloneNode.isStart && !cloneNode.isTarget;
               return {
                 ...node,
                 isVisited: isVisitedNode,
@@ -310,10 +328,10 @@ export default function App() {
 
   // Instant recalculation on dragging or changing algo
   const recalculateInstant = (newStart, newTarget) => {
-    const resetGrid = clearPathOnly(grid);
+    const clearedGrid = clearPathOnly(grid);
 
-    // Apply start/target nodes
-    const updatedGrid = resetGrid.map((row) =>
+    // Apply start/target nodes and clone
+    const gridClone = clearedGrid.map((row) =>
       row.map((node) => {
         const isStart = node.row === newStart.row && node.col === newStart.col;
         const isTarget = node.row === newTarget.row && node.col === newTarget.col;
@@ -326,27 +344,27 @@ export default function App() {
       })
     );
 
-    const startNode = updatedGrid[newStart.row][newStart.col];
-    const targetNode = updatedGrid[newTarget.row][newTarget.col];
+    const startNode = gridClone[newStart.row][newStart.col];
+    const targetNode = gridClone[newTarget.row][newTarget.col];
 
     let visitedNodesInOrder = [];
     const t0 = performance.now();
 
     switch (selectedAlgorithm) {
       case "dijkstra":
-        visitedNodesInOrder = dijkstra(updatedGrid, startNode, targetNode);
+        visitedNodesInOrder = dijkstra(gridClone, startNode, targetNode);
         break;
       case "astar":
-        visitedNodesInOrder = astar(updatedGrid, startNode, targetNode);
+        visitedNodesInOrder = astar(gridClone, startNode, targetNode);
         break;
       case "greedy":
-        visitedNodesInOrder = greedy(updatedGrid, startNode, targetNode);
+        visitedNodesInOrder = greedy(gridClone, startNode, targetNode);
         break;
       case "bfs":
-        visitedNodesInOrder = bfs(updatedGrid, startNode, targetNode);
+        visitedNodesInOrder = bfs(gridClone, startNode, targetNode);
         break;
       case "dfs":
-        visitedNodesInOrder = dfs(updatedGrid, startNode, targetNode);
+        visitedNodesInOrder = dfs(gridClone, startNode, targetNode);
         break;
       default:
         break;
@@ -358,12 +376,16 @@ export default function App() {
     const shortestPath = getNodesInShortestPathOrder(targetNode);
     const pathFound = shortestPath.length > 1 && shortestPath[0] === startNode;
 
-    const finalGrid = updatedGrid.map((row) =>
-      row.map((node) => {
-        const isVisitedNode = visitedNodesInOrder.includes(node);
-        const isPathNode = pathFound && shortestPath.includes(node) && !node.isStart && !node.isTarget;
+    const finalGrid = clearedGrid.map((row, r) =>
+      row.map((node, c) => {
+        const cloneNode = gridClone[r][c];
+        const isVisitedNode = cloneNode.isVisited;
+        const isPathNode = pathFound && shortestPath.includes(cloneNode) && !cloneNode.isStart && !cloneNode.isTarget;
         return {
           ...node,
+          isStart: cloneNode.isStart,
+          isTarget: cloneNode.isTarget,
+          isWall: cloneNode.isWall,
           isVisited: isVisitedNode,
           isShortestPath: isPathNode,
         };
@@ -378,28 +400,30 @@ export default function App() {
   };
 
   const recalculateInstantWithAlgo = (algo) => {
-    const resetGrid = clearPathOnly(grid);
-    const startNode = resetGrid[startNodePos.row][startNodePos.col];
-    const targetNode = resetGrid[targetNodePos.row][targetNodePos.col];
+    const clearedGrid = clearPathOnly(grid);
+    const gridClone = clearedGrid.map((row) => row.map((node) => ({ ...node })));
+
+    const startNode = gridClone[startNodePos.row][startNodePos.col];
+    const targetNode = gridClone[targetNodePos.row][targetNodePos.col];
 
     let visitedNodesInOrder = [];
     const t0 = performance.now();
 
     switch (algo) {
       case "dijkstra":
-        visitedNodesInOrder = dijkstra(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = dijkstra(gridClone, startNode, targetNode);
         break;
       case "astar":
-        visitedNodesInOrder = astar(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = astar(gridClone, startNode, targetNode);
         break;
       case "greedy":
-        visitedNodesInOrder = greedy(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = greedy(gridClone, startNode, targetNode);
         break;
       case "bfs":
-        visitedNodesInOrder = bfs(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = bfs(gridClone, startNode, targetNode);
         break;
       case "dfs":
-        visitedNodesInOrder = dfs(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = dfs(gridClone, startNode, targetNode);
         break;
       default:
         break;
@@ -411,10 +435,11 @@ export default function App() {
     const shortestPath = getNodesInShortestPathOrder(targetNode);
     const pathFound = shortestPath.length > 1 && shortestPath[0] === startNode;
 
-    const finalGrid = resetGrid.map((row) =>
-      row.map((node) => {
-        const isVisitedNode = visitedNodesInOrder.includes(node);
-        const isPathNode = pathFound && shortestPath.includes(node) && !node.isStart && !node.isTarget;
+    const finalGrid = clearedGrid.map((row, r) =>
+      row.map((node, c) => {
+        const cloneNode = gridClone[r][c];
+        const isVisitedNode = cloneNode.isVisited;
+        const isPathNode = pathFound && shortestPath.includes(cloneNode) && !cloneNode.isStart && !cloneNode.isTarget;
         return {
           ...node,
           isVisited: isVisitedNode,
@@ -431,28 +456,30 @@ export default function App() {
   };
 
   const recalculateInstantWithGrid = (baseGrid, start, target) => {
-    const resetGrid = clearPathOnly(baseGrid);
-    const startNode = resetGrid[start.row][start.col];
-    const targetNode = resetGrid[target.row][target.col];
+    const clearedGrid = clearPathOnly(baseGrid);
+    const gridClone = clearedGrid.map((row) => row.map((node) => ({ ...node })));
+
+    const startNode = gridClone[start.row][start.col];
+    const targetNode = gridClone[target.row][target.col];
 
     let visitedNodesInOrder = [];
     const t0 = performance.now();
 
     switch (selectedAlgorithm) {
       case "dijkstra":
-        visitedNodesInOrder = dijkstra(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = dijkstra(gridClone, startNode, targetNode);
         break;
       case "astar":
-        visitedNodesInOrder = astar(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = astar(gridClone, startNode, targetNode);
         break;
       case "greedy":
-        visitedNodesInOrder = greedy(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = greedy(gridClone, startNode, targetNode);
         break;
       case "bfs":
-        visitedNodesInOrder = bfs(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = bfs(gridClone, startNode, targetNode);
         break;
       case "dfs":
-        visitedNodesInOrder = dfs(resetGrid, startNode, targetNode);
+        visitedNodesInOrder = dfs(gridClone, startNode, targetNode);
         break;
       default:
         break;
@@ -464,10 +491,11 @@ export default function App() {
     const shortestPath = getNodesInShortestPathOrder(targetNode);
     const pathFound = shortestPath.length > 1 && shortestPath[0] === startNode;
 
-    const finalGrid = resetGrid.map((row) =>
-      row.map((node) => {
-        const isVisitedNode = visitedNodesInOrder.includes(node);
-        const isPathNode = pathFound && shortestPath.includes(node) && !node.isStart && !node.isTarget;
+    const finalGrid = clearedGrid.map((row, r) =>
+      row.map((node, c) => {
+        const cloneNode = gridClone[r][c];
+        const isVisitedNode = cloneNode.isVisited;
+        const isPathNode = pathFound && shortestPath.includes(cloneNode) && !cloneNode.isStart && !cloneNode.isTarget;
         return {
           ...node,
           isVisited: isVisitedNode,
