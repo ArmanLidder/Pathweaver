@@ -237,7 +237,8 @@ export default function App() {
             el.className = `node node-visited node-visited-${selectedAlgorithm}`;
           }
         }
-        setVisitedCount(i + 1);
+        const counterEl = document.getElementById("visited-counter");
+        if (counterEl) counterEl.innerText = i + 1;
       }, i * speed);
       timeouts.push(timeout);
     }
@@ -254,6 +255,8 @@ export default function App() {
     if (!pathFound) {
       setIsVisualizing(false);
       setVisualizingPhase("no-path");
+      setVisitedCount(visitedNodesInOrder.length);
+      setPathLength(0);
 
       const finalGrid = baseGrid.map((row) =>
         row.map((node) => ({
@@ -277,12 +280,15 @@ export default function App() {
             el.className = "node node-shortest-path";
           }
         }
-        setPathLength(i + 1);
+        const pathCounterEl = document.getElementById("path-counter");
+        if (pathCounterEl) pathCounterEl.innerText = i + 1;
 
         if (i === shortestPath.length - 1) {
           setIsVisualizing(false);
           setVisualizingPhase("completed");
           setHasPath(true);
+          setVisitedCount(visitedNodesInOrder.length);
+          setPathLength(shortestPath.length);
 
           const finalGrid = baseGrid.map((row) =>
             row.map((node) => {

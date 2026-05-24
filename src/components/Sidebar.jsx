@@ -138,11 +138,11 @@ export default function Sidebar({
         <div className="card-body">
           <div className="stats-grid">
             <div className="stat-item">
-              <span className="stat-value">{visitedCount}</span>
+              <span id="visited-counter" className="stat-value">{visitedCount}</span>
               <span className="stat-label">Visited Nodes</span>
             </div>
             <div className="stat-item">
-              <span className="stat-value" style={{ color: pathLength > 0 ? "var(--accent-gold)" : "var(--text-primary)" }}>
+              <span id="path-counter" className="stat-value" style={{ color: pathLength > 0 ? "var(--accent-gold)" : "var(--text-primary)" }}>
                 {pathLength || "-"}
               </span>
               <span className="stat-label">Path Length</span>
