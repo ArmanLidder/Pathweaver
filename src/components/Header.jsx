@@ -11,6 +11,8 @@ export default function Header({
   onClearGrid,
   onClearPath,
   hasPath,
+  gridSize,
+  onChangeGridSize,
 }) {
   const algorithms = [
     { id: "dijkstra", name: "Dijkstra's Algorithm", desc: "Guarantees shortest path. Explores outward equally." },
@@ -50,6 +52,20 @@ export default function Header({
                 {algo.name}
               </option>
             ))}
+          </select>
+        </div>
+
+        {/* Grid Size Selector */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
+          <label style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Grid Size</label>
+          <select
+            value={gridSize}
+            onChange={(e) => onChangeGridSize(e.target.value)}
+            disabled={isVisualizing}
+          >
+            <option value="small">Small (15 x 29)</option>
+            <option value="medium">Medium (21 x 47)</option>
+            <option value="large">Large (25 x 57)</option>
           </select>
         </div>
 
