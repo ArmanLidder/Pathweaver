@@ -58,7 +58,7 @@ export default function Header({
           <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
             <span>Speed</span>
             <span style={{ color: "var(--accent-blue)", fontFamily: "var(--font-mono)" }}>
-              {speed === 1 ? "Instant" : speed <= 10 ? "Fast" : speed <= 30 ? "Medium" : "Slow"}
+              {speed === 100 ? "Instant" : speed >= 80 ? "Fast" : speed >= 40 ? "Medium" : "Slow"}
             </span>
           </div>
           <input
