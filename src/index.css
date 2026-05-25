@@ -176,6 +176,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
   padding: 1rem;
   width: 100%;
   overflow: auto;
+  flex: 1;
 }
 
 .grid {
