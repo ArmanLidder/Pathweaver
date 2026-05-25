@@ -102,8 +102,8 @@ export default function Header({
           
           <button
             onClick={onClearPath}
-            disabled={isVisualizing || !hasPath}
-            title="Clear path visualization but keep walls"
+            disabled={!hasPath && !isVisualizing}
+            title="Clear path visualization (Resets visualization if running)"
           >
             <RefreshCw size={16} />
             Clear Path
@@ -112,8 +112,7 @@ export default function Header({
           <button
             className="danger"
             onClick={onClearGrid}
-            disabled={isVisualizing}
-            title="Clear walls and path"
+            title="Clear walls and path (Resets grid and halts animation)"
           >
             <Trash2 size={16} />
             Reset Grid

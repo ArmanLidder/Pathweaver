@@ -104,6 +104,7 @@ export default function App() {
     setExecutionTime(null);
     setHasPath(false);
     setVisualizingPhase("idle");
+    setIsVisualizing(false);
   };
 
   const handleGridSizeChange = (size) => {
@@ -151,6 +152,7 @@ export default function App() {
     setExecutionTime(null);
     setHasPath(false);
     setVisualizingPhase("idle");
+    setIsVisualizing(false);
 
     // Clear animations from DOM directly
     const rows = grid.length;
