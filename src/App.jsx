@@ -10,12 +10,7 @@ import { bfs } from "./algorithms/bfs";
 import { dfs } from "./algorithms/dfs";
 import { greedy } from "./algorithms/greedy";
 
-const START_NODE_ROW = 10;
-const START_NODE_COL = 8;
-const TARGET_NODE_ROW = 10;
-const TARGET_NODE_COL = 38;
-const NUM_ROWS = 21;
-const NUM_COLS = 47;
+
 
 const getDelayFromSpeed = (speedValue) => {
   if (speedValue === 100) return 0; // instant
@@ -36,8 +31,13 @@ export default function App() {
   const [hasPath, setHasPath] = useState(false);
 
   // Start & Target positions
-  const [startNodePos, setStartNodePos] = useState({ row: START_NODE_ROW, col: START_NODE_COL });
-  const [targetNodePos, setTargetNodePos] = useState({ row: TARGET_NODE_ROW, col: TARGET_NODE_COL });
+  const [startNodePos, setStartNodePos] = useState({ row: 10, col: 8 });
+  const [targetNodePos, setTargetNodePos] = useState({ row: 10, col: 38 });
+
+  // Grid Size configuration states
+  const [gridSize, setGridSize] = useState("medium");
+  const [numRows, setNumRows] = useState(21);
+  const [numCols, setNumCols] = useState(47);
 
   // Stats
   const [visitedCount, setVisitedCount] = useState(0);
@@ -55,14 +55,14 @@ export default function App() {
 
   // Initialize grid on mount
   useEffect(() => {
-    resetGridState();
+    resetGridState(21, 47);
   }, []);
 
-  const createInitialGrid = (start = startNodePos, target = targetNodePos) => {
+  const createInitialGrid = (start = startNodePos, target = targetNodePos, rows = numRows, cols = numCols) => {
     const initialGrid = [];
-    for (let r = 0; r < NUM_ROWS; r++) {
+    for (let r = 0; r < rows; r++) {
       const currentRow = [];
-      for (let c = 0; c < NUM_COLS; c++) {
+      for (let c = 0; c < cols; c++) {
         currentRow.push({
           row: r,
           col: c,
@@ -83,20 +83,43 @@ export default function App() {
     return initialGrid;
   };
 
-  const resetGridState = () => {
+  const resetGridState = (rows = numRows, cols = numCols) => {
     clearAllTimeouts();
+    const startRow = Math.floor(rows / 2);
+    const startCol = Math.floor(cols / 4);
+    const targetRow = Math.floor(rows / 2);
+    const targetCol = Math.floor(cols * 0.75);
+
     const initialGrid = createInitialGrid(
-      { row: START_NODE_ROW, col: START_NODE_COL },
-      { row: TARGET_NODE_ROW, col: TARGET_NODE_COL }
+      { row: startRow, col: startCol },
+      { row: targetRow, col: targetCol },
+      rows,
+      cols
     );
     setGrid(initialGrid);
-    setStartNodePos({ row: START_NODE_ROW, col: START_NODE_COL });
-    setTargetNodePos({ row: TARGET_NODE_ROW, col: TARGET_NODE_COL });
+    setStartNodePos({ row: startRow, col: startCol });
+    setTargetNodePos({ row: targetRow, col: targetCol });
     setVisitedCount(0);
     setPathLength(0);
     setExecutionTime(null);
     setHasPath(false);
     setVisualizingPhase("idle");
+  };
+
+  const handleGridSizeChange = (size) => {
+    setGridSize(size);
+    let rows = 21;
+    let cols = 47;
+    if (size === "small") {
+      rows = 15;
+      cols = 29;
+    } else if (size === "large") {
+      rows = 25;
+      cols = 57;
+    }
+    setNumRows(rows);
+    setNumCols(cols);
+    resetGridState(rows, cols);
   };
 
   const clearPathOnly = (currentGrid) => {
@@ -130,8 +153,10 @@ export default function App() {
     setVisualizingPhase("idle");
 
     // Clear animations from DOM directly
-    for (let r = 0; r < NUM_ROWS; r++) {
-      for (let c = 0; c < NUM_COLS; c++) {
+    const rows = grid.length;
+    const cols = grid[0] ? grid[0].length : 0;
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
         const node = grid[r][c];
         if (!node.isStart && !node.isTarget && !node.isWall) {
           const el = document.getElementById(`node-${r}-${c}`);
@@ -159,8 +184,8 @@ export default function App() {
     const gridClone = clearedGrid.map((row) => row.map((node) => ({ ...node })));
 
     // Sync baseline classnames in DOM (removes old path before starting animation)
-    for (let r = 0; r < NUM_ROWS; r++) {
-      for (let c = 0; c < NUM_COLS; c++) {
+    for (let r = 0; r < numRows; r++) {
+      for (let c = 0; c < numCols; c++) {
         const node = clearedGrid[r][c];
         if (!node.isStart && !node.isTarget && !node.isWall) {
           const el = document.getElementById(`node-${r}-${c}`);
@@ -612,9 +637,11 @@ export default function App() {
         speed={speed}
         setSpeed={setSpeed}
         onVisualize={visualizeAlgorithm}
-        onClearGrid={resetGridState}
+        onClearGrid={() => resetGridState(numRows, numCols)}
         onClearPath={handleClearPath}
         hasPath={hasPath}
+        gridSize={gridSize}
+        onChangeGridSize={handleGridSizeChange}
       />
 
       <main className="main-content">
