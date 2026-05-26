@@ -1,5 +1,4 @@
-import React from "react";
-import { GitBranch, RefreshCw, Trash2, Play, Pause, ChevronRight, Shuffle } from "lucide-react";
+import { GitBranch, RefreshCw, Trash2, Play, Shuffle } from "lucide-react";
 
 export default function Header({
   selectedAlgorithm,
@@ -23,7 +22,6 @@ export default function Header({
     { id: "dfs", name: "Depth-First Search", desc: "Does NOT guarantee shortest path. Explores deep paths first." },
   ];
 
-  const currentAlgo = algorithms.find((a) => a.id === selectedAlgorithm) || algorithms[0];
 
   return (
     <header className="glass-panel" style={{ padding: "1.2rem 2rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1.2rem" }}>

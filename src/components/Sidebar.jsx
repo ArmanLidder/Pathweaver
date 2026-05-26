@@ -1,4 +1,3 @@
-import React from "react";
 import { BarChart2, BookOpen, Clock, Activity } from "lucide-react";
 
 export default function Sidebar({

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+/* eslint-disable react-hooks/purity */
+import { useState } from "react";
 import Header from "./components/Header";
 import Grid from "./components/Grid";
 import Sidebar from "./components/Sidebar";
@@ -21,23 +22,55 @@ const getDelayFromSpeed = (speedValue) => {
   if (speedValue >= 15) return 60;  // slow
   return 120;                       // very slow
 };
+const createInitialGrid = (start, target, rows, cols) => {
+  const initialGrid = [];
+  for (let r = 0; r < rows; r++) {
+    const currentRow = [];
+    for (let c = 0; c < cols; c++) {
+      currentRow.push({
+        row: r,
+        col: c,
+        isStart: r === start.row && c === start.col,
+        isTarget: r === target.row && c === target.col,
+        distance: Infinity,
+        isVisited: false,
+        isWall: false,
+        previousNode: null,
+        gCost: Infinity,
+        hCost: Infinity,
+        fCost: Infinity,
+        isShortestPath: false,
+      });
+    }
+    initialGrid.push(currentRow);
+  }
+  return initialGrid;
+};
 
 export default function App() {
-  const [grid, setGrid] = useState([]);
+  const initialRows = 21;
+  const initialCols = 47;
+  const initialStart = { row: 10, col: 8 };
+  const initialTarget = { row: 10, col: 38 };
+
+  // Start & Target positions
+  const [startNodePos, setStartNodePos] = useState(initialStart);
+  const [targetNodePos, setTargetNodePos] = useState(initialTarget);
+
+  // Grid Size configuration states
+  const [gridSize, setGridSize] = useState("medium");
+  const [numRows, setNumRows] = useState(initialRows);
+  const [numCols, setNumCols] = useState(initialCols);
+
+  const [grid, setGrid] = useState(() =>
+    createInitialGrid(initialStart, initialTarget, initialRows, initialCols)
+  );
+
   const [selectedAlgorithm, setSelectedAlgorithm] = useState("dijkstra");
   const [speed, setSpeed] = useState(80); // Speed level 1-100 (default 80 = Fast)
   const [isVisualizing, setIsVisualizing] = useState(false);
   const [visualizingPhase, setVisualizingPhase] = useState("idle"); // 'idle', 'searching', 'pathfinding', 'completed', 'no-path'
   const [hasPath, setHasPath] = useState(false);
-
-  // Start & Target positions
-  const [startNodePos, setStartNodePos] = useState({ row: 10, col: 8 });
-  const [targetNodePos, setTargetNodePos] = useState({ row: 10, col: 38 });
-
-  // Grid Size configuration states
-  const [gridSize, setGridSize] = useState("medium");
-  const [numRows, setNumRows] = useState(21);
-  const [numCols, setNumCols] = useState(47);
 
   // Stats
   const [visitedCount, setVisitedCount] = useState(0);
@@ -52,36 +85,6 @@ export default function App() {
 
   // Timeouts reference to clear on reset
   const [animTimeouts, setAnimTimeouts] = useState([]);
-
-  // Initialize grid on mount
-  useEffect(() => {
-    resetGridState(21, 47);
-  }, []);
-
-  const createInitialGrid = (start = startNodePos, target = targetNodePos, rows = numRows, cols = numCols) => {
-    const initialGrid = [];
-    for (let r = 0; r < rows; r++) {
-      const currentRow = [];
-      for (let c = 0; c < cols; c++) {
-        currentRow.push({
-          row: r,
-          col: c,
-          isStart: r === start.row && c === start.col,
-          isTarget: r === target.row && c === target.col,
-          distance: Infinity,
-          isVisited: false,
-          isWall: false,
-          previousNode: null,
-          gCost: Infinity,
-          hCost: Infinity,
-          fCost: Infinity,
-          isShortestPath: false,
-        });
-      }
-      initialGrid.push(currentRow);
-    }
-    return initialGrid;
-  };
 
   const resetGridState = (rows = numRows, cols = numCols) => {
     clearAllTimeouts();
@@ -106,6 +109,7 @@ export default function App() {
     setVisualizingPhase("idle");
     setIsVisualizing(false);
   };
+
 
   const handleGridSizeChange = (size) => {
     setGridSize(size);
@@ -172,6 +176,62 @@ export default function App() {
     setSelectedAlgorithm(algo);
     if (hasPath) {
       recalculateInstantWithAlgo(algo);
+    }
+  };
+
+  const generateRandomMaze = () => {
+    if (isVisualizing) return;
+
+    clearAllTimeouts();
+    const rows = numRows;
+    const cols = numCols;
+
+    const newGrid = grid.map((row) =>
+      row.map((node) => {
+        // Clear all path/visited states
+        const clearedNode = {
+          ...node,
+          distance: Infinity,
+          isVisited: false,
+          isShortestPath: false,
+          previousNode: null,
+          gCost: Infinity,
+          hCost: Infinity,
+          fCost: Infinity,
+        };
+
+        if (clearedNode.isStart || clearedNode.isTarget) {
+          clearedNode.isWall = false;
+        } else {
+          clearedNode.isWall = Math.random() < 0.3; // ~30% density
+        }
+        return clearedNode;
+      })
+    );
+
+    setGrid(newGrid);
+    setVisitedCount(0);
+    setPathLength(0);
+    setExecutionTime(null);
+    setHasPath(false);
+    setVisualizingPhase("idle");
+    setIsVisualizing(false);
+
+    // Sync classes in the DOM directly to ensure consistency
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const node = newGrid[r][c];
+        const el = document.getElementById(`node-${r}-${c}`);
+        if (el) {
+          let extraClassName = "";
+          if (node.isTarget) extraClassName = "node-target";
+          else if (node.isStart) extraClassName = "node-start";
+          else if (node.isWall) extraClassName = "node-wall";
+          
+          const isInteractive = !node.isStart && !node.isTarget;
+          el.className = `node ${extraClassName} ${isInteractive ? "node-hoverable" : ""}`;
+        }
+      }
     }
   };
 
@@ -641,6 +701,7 @@ export default function App() {
         onVisualize={visualizeAlgorithm}
         onClearGrid={() => resetGridState(numRows, numCols)}
         onClearPath={handleClearPath}
+        onGenerateMaze={generateRandomMaze}
         hasPath={hasPath}
         gridSize={gridSize}
         onChangeGridSize={handleGridSizeChange}

@@ -1,4 +1,4 @@
-import React from "react";
+import { Fragment } from "react";
 import Node from "./Node";
 
 export default function Grid({
@@ -25,8 +25,8 @@ export default function Grid({
       >
         {grid.map((row, rowIdx) => {
           return (
-            <React.Fragment key={rowIdx}>
-              {row.map((node, nodeIdx) => {
+            <Fragment key={rowIdx}>
+              {row.map((node) => {
                 const { row, col, isStart, isTarget, isWall, isVisited, isShortestPath } = node;
                 return (
                   <Node
@@ -45,7 +45,7 @@ export default function Grid({
                   />
                 );
               })}
-            </React.Fragment>
+            </Fragment>
           );
         })}
       </div>
