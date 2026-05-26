@@ -5,6 +5,7 @@ export default function Grid({
   grid,
   selectedAlgorithm,
   isVisualizing,
+  isInstant,
   onMouseDown,
   onMouseEnter,
   onMouseUp,
@@ -15,7 +16,7 @@ export default function Grid({
   return (
     <div className="grid-container" onMouseLeave={onMouseUp}>
       <div
-        className="grid"
+        className={`grid ${isInstant ? "grid-instant" : ""}`}
         style={{
           gridTemplateColumns: `repeat(${numCols}, 25px)`,
           gridTemplateRows: `repeat(${numRows}, 25px)`,

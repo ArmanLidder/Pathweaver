@@ -620,3 +620,36 @@ input[type="range"]::-webkit-slider-thumb:hover {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.2);
 }
+
+/* Instant Styles (no animations during static renders or instant solves) */
+.grid-instant .node-visited-dijkstra {
+  animation: none !important;
+  background-color: rgba(79, 70, 229, 0.25) !important;
+  border-color: rgba(99, 102, 241, 0.15) !important;
+}
+.grid-instant .node-visited-astar {
+  animation: none !important;
+  background-color: rgba(217, 119, 6, 0.25) !important;
+  border-color: rgba(245, 158, 11, 0.15) !important;
+}
+.grid-instant .node-visited-bfs {
+  animation: none !important;
+  background-color: rgba(13, 148, 136, 0.25) !important;
+  border-color: rgba(20, 184, 166, 0.15) !important;
+}
+.grid-instant .node-visited-dfs {
+  animation: none !important;
+  background-color: rgba(153, 27, 27, 0.25) !important;
+  border-color: rgba(185, 28, 28, 0.15) !important;
+}
+.grid-instant .node-visited-greedy {
+  animation: none !important;
+  background-color: rgba(190, 24, 74, 0.25) !important;
+  border-color: rgba(219, 39, 119, 0.15) !important;
+}
+.grid-instant .node-shortest-path {
+  animation: none !important;
+  background: linear-gradient(135deg, var(--accent-gold) 0%, #fb923c 50%, var(--accent-purple) 100%) !important;
+  border-color: rgba(250, 204, 21, 0.6) !important;
+  box-shadow: 0 0 15px rgba(250, 204, 21, 0.5) !important;
+}
