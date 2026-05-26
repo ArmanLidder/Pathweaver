@@ -1,5 +1,5 @@
 import React from "react";
-import { GitBranch, RefreshCw, Trash2, Play, Pause, ChevronRight } from "lucide-react";
+import { GitBranch, RefreshCw, Trash2, Play, Pause, ChevronRight, Shuffle } from "lucide-react";
 
 export default function Header({
   selectedAlgorithm,
@@ -10,6 +10,7 @@ export default function Header({
   onVisualize,
   onClearGrid,
   onClearPath,
+  onGenerateMaze,
   hasPath,
   gridSize,
   onChangeGridSize,
@@ -98,6 +99,15 @@ export default function Header({
           >
             <Play size={16} fill="white" />
             Visualize
+          </button>
+
+          <button
+            onClick={onGenerateMaze}
+            disabled={isVisualizing}
+            title="Generate a random wall maze layout"
+          >
+            <Shuffle size={16} />
+            Random Maze
           </button>
           
           <button
