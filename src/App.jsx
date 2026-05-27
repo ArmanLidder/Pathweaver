@@ -708,27 +708,29 @@ export default function App() {
       />
 
       <main className="main-content">
-        <section className="grid-panel glass-panel">
-          <div className="card-header">
-            <h2 className="card-title">Grid Explorer</h2>
-            <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-              Drag pins to re-position. Click/drag on empty cells to paint obstacles.
-            </span>
-          </div>
-          
-          {grid.length > 0 && (
-            <Grid
-              grid={grid}
-              selectedAlgorithm={selectedAlgorithm}
-              isVisualizing={isVisualizing}
-              isInstant={!isVisualizing}
-              onMouseDown={handleMouseDown}
-              onMouseEnter={handleMouseEnter}
-              onMouseUp={handleMouseUp}
-            />
-          )}
+        <section className="grid-panel">
+          <div className="grid-workspace">
+            <div className="grid-header">
+              <h2 className="grid-title">Grid Explorer</h2>
+              <span className="grid-subtitle">
+                Drag pins to re-position. Click/drag on empty cells to paint obstacles.
+              </span>
+            </div>
+            
+            {grid.length > 0 && (
+              <Grid
+                grid={grid}
+                selectedAlgorithm={selectedAlgorithm}
+                isVisualizing={isVisualizing}
+                isInstant={!isVisualizing}
+                onMouseDown={handleMouseDown}
+                onMouseEnter={handleMouseEnter}
+                onMouseUp={handleMouseUp}
+              />
+            )}
 
-          <Legend selectedAlgorithm={selectedAlgorithm} />
+            <Legend selectedAlgorithm={selectedAlgorithm} />
+          </div>
         </section>
 
         <Sidebar
