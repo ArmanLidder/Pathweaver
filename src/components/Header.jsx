@@ -1,4 +1,4 @@
-import { GitBranch, RefreshCw, Trash2, Play, Shuffle } from "lucide-react";
+import { Play, Shuffle, RefreshCw, Trash2 } from "lucide-react";
 
 export default function Header({
   selectedAlgorithm,
@@ -15,32 +15,27 @@ export default function Header({
   onChangeGridSize,
 }) {
   const algorithms = [
-    { id: "dijkstra", name: "Dijkstra's Algorithm", desc: "Guarantees shortest path. Explores outward equally." },
-    { id: "astar", name: "A* Search", desc: "Guarantees shortest path. Uses heuristics to target destination." },
-    { id: "greedy", name: "Greedy Best-First Search", desc: "Does NOT guarantee shortest path. Moves strictly towards destination." },
-    { id: "bfs", name: "Breadth-First Search", desc: "Guarantees shortest path. Great for unweighted grids." },
-    { id: "dfs", name: "Depth-First Search", desc: "Does NOT guarantee shortest path. Explores deep paths first." },
+    { id: "dijkstra", name: "Dijkstra" },
+    { id: "astar", name: "A* Search" },
+    { id: "greedy", name: "Greedy BFS" },
+    { id: "bfs", name: "BFS" },
+    { id: "dfs", name: "DFS" },
   ];
 
-
   return (
-    <header className="glass-panel" style={{ padding: "1.2rem 2rem", display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "1.2rem" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
-        <div style={{ background: "linear-gradient(135deg, var(--accent-blue), var(--accent-purple))", padding: "0.6rem", borderRadius: "12px", boxShadow: "0 0 15px rgba(99, 102, 241, 0.4)" }}>
-          <GitBranch size={24} style={{ color: "white" }} />
-        </div>
-        <div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: "700", letterSpacing: "-0.02em", margin: 0, background: "linear-gradient(to right, #ffffff, #9ca3af)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            Pathweaver
-          </h1>
-          <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Interactive Pathfinding Visualizer</p>
-        </div>
+    <header>
+      {/* Brand Logo & Name */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <span style={{ fontSize: "1rem", fontWeight: "600", letterSpacing: "-0.01em", color: "var(--text-primary)" }}>
+          Pathweaver
+        </span>
       </div>
 
-      <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "1rem" }}>
-        {/* Selector */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <label style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Algorithm</label>
+      {/* Selectors and Settings */}
+      <div style={{ display: "flex", alignItems: "center", gap: "1.2rem" }}>
+        {/* Algorithm dropdown */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "500" }}>Algorithm</span>
           <select
             value={selectedAlgorithm}
             onChange={(e) => setSelectedAlgorithm(e.target.value)}
@@ -54,28 +49,23 @@ export default function Header({
           </select>
         </div>
 
-        {/* Grid Size Selector */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <label style={{ fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>Grid Size</label>
+        {/* Grid Size dropdown */}
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "500" }}>Size</span>
           <select
             value={gridSize}
             onChange={(e) => onChangeGridSize(e.target.value)}
             disabled={isVisualizing}
           >
-            <option value="small">Small (15 x 29)</option>
-            <option value="medium">Medium (21 x 47)</option>
-            <option value="large">Large (25 x 57)</option>
+            <option value="small">Small</option>
+            <option value="medium">Medium</option>
+            <option value="large">Large</option>
           </select>
         </div>
 
         {/* Speed Slider */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem", minWidth: "140px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", fontWeight: "600" }}>
-            <span>Speed</span>
-            <span style={{ color: "var(--accent-blue)", fontFamily: "var(--font-mono)" }}>
-              {speed === 100 ? "Instant" : speed >= 80 ? "Fast" : speed >= 40 ? "Medium" : "Slow"}
-            </span>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", textTransform: "uppercase", fontWeight: "500" }}>Speed</span>
           <input
             type="range"
             min="1"
@@ -83,49 +73,48 @@ export default function Header({
             value={speed}
             onChange={(e) => setSpeed(Number(e.target.value))}
             disabled={isVisualizing}
-            style={{ width: "100%" }}
+            style={{ width: "80px" }}
           />
         </div>
+      </div>
 
-        {/* Action Controls */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "1rem" }}>
-          <button
-            className="primary"
-            onClick={onVisualize}
-            disabled={isVisualizing}
-            style={{ padding: "0.6rem 1.4rem" }}
-          >
-            <Play size={16} fill="white" />
-            Visualize
-          </button>
+      {/* Action Buttons */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <button
+          className="primary"
+          onClick={onVisualize}
+          disabled={isVisualizing}
+        >
+          <Play size={14} fill="currentColor" />
+          Run
+        </button>
 
-          <button
-            onClick={onGenerateMaze}
-            disabled={isVisualizing}
-            title="Generate a random wall maze layout"
-          >
-            <Shuffle size={16} />
-            Random Maze
-          </button>
-          
-          <button
-            onClick={onClearPath}
-            disabled={!hasPath && !isVisualizing}
-            title="Clear path visualization (Resets visualization if running)"
-          >
-            <RefreshCw size={16} />
-            Clear Path
-          </button>
+        <button
+          onClick={onGenerateMaze}
+          disabled={isVisualizing}
+          title="Generate random walls"
+        >
+          <Shuffle size={14} />
+          Maze
+        </button>
+        
+        <button
+          onClick={onClearPath}
+          disabled={!hasPath && !isVisualizing}
+          title="Clear path output"
+        >
+          <RefreshCw size={14} />
+          Clear Path
+        </button>
 
-          <button
-            className="danger"
-            onClick={onClearGrid}
-            title="Clear walls and path (Resets grid and halts animation)"
-          >
-            <Trash2 size={16} />
-            Reset Grid
-          </button>
-        </div>
+        <button
+          className="danger"
+          onClick={onClearGrid}
+          title="Reset grid"
+        >
+          <Trash2 size={14} />
+          Reset
+        </button>
       </div>
     </header>
   );
